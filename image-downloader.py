@@ -79,7 +79,8 @@ def download_images(image_urls, create_subfolders, save_location):
         file_path = str(Path(subfolder_path, file_name)).replace('\\', '\\\\')
         
         # Save the image to the file
-        Path(file_path).write_bytes(response.content)
+        with open(file_path, 'wb') as f:
+            f.write(response.content)
         
         # Increment the counter
         download_count += 1
