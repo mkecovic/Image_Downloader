@@ -108,7 +108,10 @@ with tab1:
     # Choose the save location
     save_location = st.text_input('Save Location:', placeholder='Leave blank to use current directory', key = "save_location_urls")
     if save_location == '':
-        save_location = '.'
+        save_location = os.path.join(os.path.expanduser('~'), 'Downloads')
+        # Check if the folder exists and if not, create it
+        if not os.path.exists(save_location):
+            os.makedirs(save_location)
     save_location = os.path.abspath(save_location)
 
     if st.button("Download Images", key = "button_urls"):
@@ -131,7 +134,10 @@ with tab2:
     # Choose the save location
     save_location = st.text_input('Save Location:', placeholder='Leave blank to use current directory', key = "save_location_csv")
     if save_location == '':
-        save_location = '.'
+        save_location = os.path.join(os.path.expanduser('~'), 'Downloads')
+        # Check if the folder exists and if not, create it
+        if not os.path.exists(save_location):
+            os.makedirs(save_location)
     save_location = os.path.abspath(save_location)
 
     # Add a download button
