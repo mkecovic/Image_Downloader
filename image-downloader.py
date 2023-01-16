@@ -4,6 +4,8 @@ from pathlib import Path
 import pandas as pd
 import re
 import os
+import zipfile
+import shutil
 
 st.set_page_config(
     page_title="Image Downloader", 
@@ -36,7 +38,14 @@ footer:after {
 </style>
 """, unsafe_allow_html=True)
 
-def download_images(image_urls, create_subfolders, save_location):
+def zip_images(file_paths, zip_file_name):
+    # Create the zip file and add the images
+    with zipfile.ZipFile(zip_file_name, 'w') as zip_file:
+        for file_path in file_paths:
+            zip_file.write(file_path)
+            os.remove(file_path)
+            
+def download_images(image_urls, create_subfolders):
     # Initialize the counter
     download_count = 0
 
@@ -45,6 +54,8 @@ def download_images(image_urls, create_subfolders, save_location):
 
     # Create a "more details" link with an accordion
     expander = st.expander("More details")
+    
+    file_paths = []
     
     # Download the images
     for i, url in enumerate(image_urls):
@@ -61,16 +72,17 @@ def download_images(image_urls, create_subfolders, save_location):
         folder_path = folder_path.replace('https://', '')
 
         # Split the folder path into subfolders
+        first_folder = folder_path.split('/', 1)[0]
         subfolders = folder_path.split('/')
         
         # Create the subfolders if they don't exist
         subfolder_path = ''
         if create_subfolders:
             for subfolder in subfolders:
-                subfolder_path = Path(save_location, subfolder_path, subfolder)
+                subfolder_path = Path(subfolder_path, subfolder)
                 subfolder_path.mkdir(parents=True, exist_ok=True)
-        else:
-            subfolder_path = Path(save_location)
+        #else:
+        #    subfolder_path = Path(save_location)
                 
         # Download the image
         response = requests.get(url)
@@ -81,6 +93,7 @@ def download_images(image_urls, create_subfolders, save_location):
         # Save the image to the file
         with open(file_path, 'wb') as f:
             f.write(response.content)
+            file_paths.append(file_path)
         
         # Increment the counter
         download_count += 1
@@ -91,8 +104,20 @@ def download_images(image_urls, create_subfolders, save_location):
         # Add content to the expander
         with expander:
             # Display a message indicating that the image was saved
-            st.write(f'`{file_name}` saved to `{subfolder_path}`!', markdown=True)
-          
+            st.write(f'`{file_name}` is saved!', markdown=True)
+    
+    zip_file_name = 'images.zip'        
+    zip_images(file_paths, zip_file_name)
+    with open(zip_file_name, "rb") as file:
+        st.download_button("Download ZIP", file, zip_file_name)
+        file.close()
+        os.remove(zip_file_name)
+        
+    try:
+        shutil.rmtree(first_folder)
+    except FileNotFoundError:
+        pass
+
     return download_count
 
 # Create the tabs
@@ -106,23 +131,18 @@ with tab1:
     # Add a checkbox to choose whether to create subfolders
     create_subfolders = st.checkbox('Create subfolders based on URL structure', key = "create_subfolders_urls")
     
-    # Choose the save location
-    save_location = st.text_input('Save Location:', placeholder='Leave blank to use current directory', key = "save_location_urls")
-    if save_location == '':
-        save_location = os.path.join(os.path.expanduser('~'), 'Downloads')
-        # Check if the folder exists and if not, create it
-        if not os.path.exists(save_location):
-            os.makedirs(save_location)
-    save_location = os.path.abspath(save_location)
-
-    if st.button("Download Images", key = "button_urls"):
+    placeholder = st.empty()
+    btn = placeholder.button("Download Images", disabled=False, key = "button_urls_1")
+    if btn:
+        placeholder.button("Download Images", disabled=True, key = "button_urls_2")
         # Split the image_urls by newline
         image_urls = image_urls.split("\n")
         # Remove empty URLs
         image_urls = list(filter(None, image_urls))
         # Display the download count after the download process is complete
-        download_count = download_images(image_urls, create_subfolders, save_location)
+        download_count = download_images(image_urls, create_subfolders)
         st.write("Number of images downloaded: ", download_count)
+        
  
 with tab2:
 
@@ -131,15 +151,6 @@ with tab2:
 
     # Add a checkbox to choose whether to create subfolders
     create_subfolders = st.checkbox('Create subfolders based on URL structure', key = "create_subfolders_csv")
-
-    # Choose the save location
-    save_location = st.text_input('Save Location:', placeholder='Leave blank to use current directory', key = "save_location_csv")
-    if save_location == '':
-        save_location = os.path.join(os.path.expanduser('~'), 'Downloads')
-        # Check if the folder exists and if not, create it
-        if not os.path.exists(save_location):
-            os.makedirs(save_location)
-    save_location = os.path.abspath(save_location)
 
     # Add a download button
     if st.button('Download Images', key = "button_csv"):
@@ -154,7 +165,7 @@ with tab2:
             image_urls = df['url'].tolist()
          
             # Display the download count after the download process is complete
-            download_count = download_images(image_urls, create_subfolders, save_location)
+            download_count = download_images(image_urls, create_subfolders)
             st.write("Number of images downloaded: ", download_count)
 
         else:
