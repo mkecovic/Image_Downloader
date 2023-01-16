@@ -132,9 +132,9 @@ with tab1:
     create_subfolders = st.checkbox('Create subfolders based on URL structure', key = "create_subfolders_urls")
     
     placeholder = st.empty()
-    btn = placeholder.button("Download Images", disabled=False, key = "button_urls_1")
+    btn = placeholder.button("Download Images", disabled=False, key = "button_urls_enabled")
     if btn:
-        placeholder.button("Download Images", disabled=True, key = "button_urls_2")
+        placeholder.button("Download Images", disabled=True, key = "button_urls_disabled")
         # Split the image_urls by newline
         image_urls = image_urls.split("\n")
         # Remove empty URLs
@@ -153,8 +153,10 @@ with tab2:
     create_subfolders = st.checkbox('Create subfolders based on URL structure', key = "create_subfolders_csv")
 
     # Add a download button
-    if st.button('Download Images', key = "button_csv"):
-
+    placeholder = st.empty()
+    btn = placeholder.button("Download Images", disabled=False, key = "button_csv_enabled")
+    if btn:
+        placeholder.button('Download Images', disabled=True, key = "button_csv_disabled")
         # Add a download button
         if uploaded_file is not None:
             
